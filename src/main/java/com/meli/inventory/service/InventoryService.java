@@ -40,17 +40,12 @@ public class InventoryService {
             throw new IllegalStateException("stock insuficiente");
         }
 
-        // [R6] No hay verificacion de reserva duplicada para el mismo orderId+productId.
-        // Cada llamada crea una nueva reserva, permitiendo duplicados.
-
         Reservation reservation = new Reservation();
         reservation.setId(UUID.randomUUID().toString());
         reservation.setProductId(request.productId());
         reservation.setOrderId(request.orderId());
         reservation.setUnits(request.units());
         reservation.setStatus(ReservationStatus.RESERVED);
-        // [R3] Se usa LocalDateTime.now() en lugar del Clock bean inyectable.
-        // Esto impide escribir tests deterministas sobre el tiempo de expiracion.
         reservation.setCreatedAt(LocalDateTime.now());
         reservation.setExpiresAt(LocalDateTime.now().plusSeconds(expirationSeconds));
 
@@ -64,9 +59,6 @@ public class InventoryService {
     public ReservationResponse confirmReservation(ConfirmRequest request) {
         Reservation reservation = reservationRepository.findById(request.reservationId())
                 .orElseThrow(() -> new NoSuchElementException("Reserva no encontrada: " + request.reservationId()));
-
-        // [R3] No se verifica si la reserva ya expiró antes de confirmar.
-        // Una reserva con expiresAt en el pasado debería retornar 409, pero pasa sin error.
 
         if (reservation.getStatus() != ReservationStatus.RESERVED) {
             throw new IllegalStateException(
@@ -83,9 +75,6 @@ public class InventoryService {
         Reservation reservation = reservationRepository.findById(request.reservationId())
                 .orElseThrow(() -> new NoSuchElementException("Reserva no encontrada: " + request.reservationId()));
 
-        // [R4] Solo bloquea el estado CONFIRMED. No bloquea RELEASED ni EXPIRED.
-        // Liberar una reserva EXPIRED suma unidades al stock aunque ya hayan sido liberadas por expiración.
-        // [R5] Liberar una reserva ya RELEASED suma unidades al stock por segunda vez (idempotencia rota).
         if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
             throw new IllegalStateException("No se puede liberar una reserva confirmada");
         }
