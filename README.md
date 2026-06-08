@@ -1,5 +1,7 @@
 # inventory-service
 
+> **Repositorio de onboarding** — Este proyecto se utiliza durante el proceso de incorporación de nuevos desarrolladores al equipo. Su propósito es brindar un entorno de práctica para aprender las convenciones de testing del stack backend.
+
 Microservicio responsable de gestionar el stock disponible de productos dentro de la plataforma.
 
 ## Contexto de negocio
